@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext", "hrms"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -43,7 +43,6 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -86,7 +85,8 @@ app_license = "mit"
 # ------------
 
 # before_install = "memo_management_system.install.before_install"
-# after_install = "memo_management_system.install.after_install"
+after_install = "memo_management_system.install.after_install"
+after_migrate = "memo_management_system.install.after_migrate"
 
 # Uninstallation
 # ------------
@@ -126,25 +126,28 @@ app_license = "mit"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+    "Memo": "memo_management_system.api.permissions.get_memo_permission_query_conditions",
+}
+
+has_permission = {
+    "Memo": "memo_management_system.api.permissions.has_memo_permission",
+}
 
 # Document Events
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Employee": {
+        "after_insert": "memo_management_system.utils.memo.sync_memo_access_for_employee_doc",
+        "on_update": "memo_management_system.utils.memo.sync_memo_access_for_employee_doc",
+    },
+    "User": {
+        "after_insert": "memo_management_system.utils.memo.sync_memo_access_for_user_doc",
+        "on_update": "memo_management_system.utils.memo.sync_memo_access_for_user_doc",
+    }
+}
 
 # Scheduled Tasks
 # ---------------
@@ -255,4 +258,3 @@ app_license = "mit"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

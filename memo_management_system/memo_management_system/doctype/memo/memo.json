@@ -1,0 +1,421 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-07-10 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "identity_section",
+  "naming_series",
+  "status",
+  "memo_category",
+  "column_break_identity",
+  "priority",
+  "confidentiality",
+  "requires_approval",
+  "approval_section",
+  "approver",
+  "approved_by",
+  "approved_on",
+  "column_break_approval",
+  "rejected_by",
+  "rejected_on",
+  "approval_remarks",
+  "origin_section",
+  "company",
+  "department",
+  "memo_date",
+  "effective_date",
+  "column_break_origin",
+  "origin_employee",
+  "originator_name",
+  "originator_designation",
+  "content_section",
+  "subject",
+  "summary",
+  "content",
+  "recipient_section",
+  "require_recipient_acknowledgement",
+  "acknowledgement_due_date",
+  "column_break_recipient",
+  "recipients",
+  "execution_section",
+  "action_points",
+  "routing_history",
+  "related_documents_section",
+  "material_request",
+  "purchase_order",
+  "column_break_related",
+  "primary_attachment",
+  "reference_documents",
+  "sign_off_section",
+  "prepared_by",
+  "prepared_on",
+  "column_break_sign_off",
+  "circulated_by",
+  "circulated_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "MEMO-.YYYY.-",
+   "print_hide": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nPending Approval\nApproved\nRejected\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "memo_category",
+   "fieldtype": "Select",
+   "label": "Memo Category",
+   "options": "General\nAdministrative\nProcurement\nFinance\nHuman Resource\nOperations"
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "Normal\nLow\nHigh\nUrgent"
+  },
+  {
+   "fieldname": "confidentiality",
+   "fieldtype": "Select",
+   "label": "Confidentiality",
+   "options": "Internal\nConfidential\nRestricted"
+  },
+  {
+   "default": "1",
+   "fieldname": "requires_approval",
+   "fieldtype": "Check",
+   "label": "Requires Approval"
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Approver",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rejected_by",
+   "fieldtype": "Link",
+   "label": "Rejected By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_on",
+   "fieldtype": "Datetime",
+   "label": "Rejected On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_remarks",
+   "fieldtype": "Small Text",
+   "label": "Approval Remarks",
+   "read_only": 1
+  },
+  {
+   "fieldname": "origin_section",
+   "fieldtype": "Section Break",
+   "label": "Origin"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "default": "Today",
+   "fieldname": "memo_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Memo Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "label": "Effective Date"
+  },
+  {
+   "fieldname": "column_break_origin",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "origin_employee",
+   "fieldtype": "Link",
+   "label": "Origin Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "originator_name",
+   "fieldtype": "Data",
+   "label": "From",
+   "read_only": 1
+  },
+  {
+   "fieldname": "originator_designation",
+   "fieldtype": "Data",
+   "label": "Originator Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_section",
+   "fieldtype": "Section Break",
+   "label": "Memo Content"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Small Text",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "content",
+   "fieldtype": "Text Editor",
+   "label": "Content",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recipient_section",
+   "fieldtype": "Section Break",
+   "label": "Recipients and Acknowledgement"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_recipient_acknowledgement",
+   "fieldtype": "Check",
+   "label": "Require Recipient Acknowledgement"
+  },
+  {
+   "fieldname": "acknowledgement_due_date",
+   "fieldtype": "Date",
+   "label": "Acknowledgement Due Date"
+  },
+  {
+   "fieldname": "column_break_recipient",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Table",
+   "label": "Recipients",
+   "options": "Memo recipient",
+   "reqd": 1
+  },
+  {
+   "fieldname": "execution_section",
+   "fieldtype": "Section Break",
+   "label": "Execution and Follow-up"
+  },
+  {
+   "fieldname": "action_points",
+   "fieldtype": "Table",
+   "label": "Action Points",
+   "options": "Memo Action Point"
+  },
+  {
+   "fieldname": "routing_history",
+   "fieldtype": "Table",
+   "label": "Routing History",
+   "options": "Memo Routing Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "related_documents_section",
+   "fieldtype": "Section Break",
+   "label": "Related Documents"
+  },
+  {
+   "fieldname": "material_request",
+   "fieldtype": "Link",
+   "label": "Material Request",
+   "options": "Material Request"
+  },
+  {
+   "fieldname": "purchase_order",
+   "fieldtype": "Link",
+   "label": "Purchase Order",
+   "options": "Purchase Order"
+  },
+  {
+   "fieldname": "column_break_related",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "primary_attachment",
+   "fieldtype": "Attach",
+   "label": "Primary Attachment"
+  },
+  {
+   "fieldname": "reference_documents",
+   "fieldtype": "Table",
+   "label": "Additional Related Documents",
+   "options": "Memo Reference"
+  },
+  {
+   "fieldname": "sign_off_section",
+   "fieldtype": "Section Break",
+   "label": "Digital Sign-off"
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_on",
+   "fieldtype": "Datetime",
+   "label": "Prepared On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_sign_off",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "circulated_by",
+   "fieldtype": "Link",
+   "label": "Circulated By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "circulated_on",
+   "fieldtype": "Datetime",
+   "label": "Circulated On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Memo Management System",
+ "name": "Memo",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Memo Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Memo Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Memo Approver",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Memo User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "subject,summary,material_request,purchase_order,originator_name,department",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "subject",
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}

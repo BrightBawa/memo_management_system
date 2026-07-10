@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-10 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "action_title",
+  "assigned_employee",
+  "assigned_employee_name",
+  "assigned_user",
+  "assigned_designation",
+  "due_date",
+  "priority",
+  "status",
+  "action_details",
+  "completion_notes",
+  "completed_by",
+  "completed_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "action_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Action Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assigned_employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assigned Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "assigned_employee.employee_name",
+   "fieldname": "assigned_employee_name",
+   "fieldtype": "Data",
+   "label": "Assigned Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "assigned_employee.user_id",
+   "fieldname": "assigned_user",
+   "fieldtype": "Data",
+   "label": "Assigned User",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "assigned_employee.designation",
+   "fieldname": "assigned_designation",
+   "fieldtype": "Data",
+   "label": "Assigned Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "Normal\nLow\nHigh\nUrgent"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nIn Progress\nCompleted\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "action_details",
+   "fieldtype": "Small Text",
+   "label": "Action Details"
+  },
+  {
+   "fieldname": "completion_notes",
+   "fieldtype": "Small Text",
+   "label": "Completion Notes"
+  },
+  {
+   "fieldname": "completed_by",
+   "fieldtype": "Link",
+   "label": "Completed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 20,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Memo Management System",
+ "name": "Memo Action Point",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

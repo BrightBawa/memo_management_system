@@ -1,0 +1,139 @@
+{
+ "app": "memo_management_system",
+ "charts": [],
+ "content": "[{\"id\":\"memo_header_overview\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Official Memo Workbench</b></span>\",\"col\":12}},{\"id\":\"memo_card_operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Memo Operations\",\"col\":4}},{\"id\":\"memo_card_governance\",\"type\":\"card\",\"data\":{\"card_name\":\"Approvals and Governance\",\"col\":4}},{\"id\":\"memo_card_reference\",\"type\":\"card\",\"data\":{\"card_name\":\"Related Documents\",\"col\":4}}]",
+ "creation": "2026-07-10 13:58:55.029958",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "mail",
+ "idx": 0,
+ "indicator_color": "blue",
+ "is_hidden": 0,
+ "label": "Memo Management",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo Operations",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo",
+   "link_count": 0,
+   "link_to": "Memo",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Approvals and Governance",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo Settings",
+   "link_count": 0,
+   "link_to": "Memo Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo Governance Report",
+   "link_count": 0,
+   "link_to": "Memo Governance Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Memo",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Related Documents",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Order",
+   "link_count": 0,
+   "link_to": "Purchase Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Material Request",
+   "link_count": 0,
+   "link_to": "Material Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee",
+   "link_count": 0,
+   "link_to": "Employee",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-07-10 13:58:56.656805",
+ "modified_by": "Administrator",
+ "module": "Memo Management System",
+ "name": "Memo Management",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Memo User"
+  },
+  {
+   "role": "Memo Approver"
+  },
+  {
+   "role": "Memo Manager"
+  },
+  {
+   "role": "Memo Administrator"
+  }
+ ],
+ "sequence_id": 30.0,
+ "shortcuts": [],
+ "title": "Memo Management",
+ "type": "Workspace"
+}

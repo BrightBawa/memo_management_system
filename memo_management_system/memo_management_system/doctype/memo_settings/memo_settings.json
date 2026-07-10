@@ -1,0 +1,156 @@
+{
+ "actions": [],
+ "creation": "2026-07-10 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "access_section",
+  "auto_assign_memo_user_role",
+  "memo_user_role",
+  "enforce_employee_scope",
+  "column_break_access",
+  "require_approval_by_default",
+  "require_acknowledgement_by_default",
+  "enable_email_notifications",
+  "defaults_section",
+  "default_naming_series",
+  "default_confidentiality",
+  "column_break_defaults",
+  "default_priority",
+  "default_acknowledgement_window_days",
+  "roles_section",
+  "global_access_roles",
+  "approval_roles"
+ ],
+ "fields": [
+  {
+   "fieldname": "access_section",
+   "fieldtype": "Section Break",
+   "label": "Access Defaults"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_assign_memo_user_role",
+   "fieldtype": "Check",
+   "label": "Automatically Grant Memo Access to Employee Users"
+  },
+  {
+   "fieldname": "memo_user_role",
+   "fieldtype": "Link",
+   "label": "Default Memo User Role",
+   "options": "Role",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enforce_employee_scope",
+   "fieldtype": "Check",
+   "label": "Limit Standard Users to Their Own Memos"
+  },
+  {
+   "fieldname": "column_break_access",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_approval_by_default",
+   "fieldtype": "Check",
+   "label": "Require Approval by Default"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_acknowledgement_by_default",
+   "fieldtype": "Check",
+   "label": "Require Recipient Acknowledgement by Default"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_email_notifications",
+   "fieldtype": "Check",
+   "label": "Enable Email Notifications"
+  },
+  {
+   "fieldname": "defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Document Defaults"
+  },
+  {
+   "fieldname": "default_naming_series",
+   "fieldtype": "Data",
+   "label": "Default Naming Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_confidentiality",
+   "fieldtype": "Select",
+   "label": "Default Confidentiality",
+   "options": "Internal\nConfidential\nRestricted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_defaults",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_priority",
+   "fieldtype": "Select",
+   "label": "Default Priority",
+   "options": "Normal\nLow\nHigh\nUrgent",
+   "reqd": 1
+  },
+  {
+   "default": "3",
+   "fieldname": "default_acknowledgement_window_days",
+   "fieldtype": "Int",
+   "label": "Default Acknowledgement Window (Days)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "roles_section",
+   "fieldtype": "Section Break",
+   "label": "Privileged Roles"
+  },
+  {
+   "fieldname": "global_access_roles",
+   "fieldtype": "Table",
+   "label": "Roles With Access to All Memos",
+   "options": "Memo Settings Role"
+  },
+  {
+   "fieldname": "approval_roles",
+   "fieldtype": "Table",
+   "label": "Roles That Can Approve Any Memo",
+   "options": "Memo Settings Role"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Memo Management System",
+ "name": "Memo Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Memo Administrator",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Memo Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
