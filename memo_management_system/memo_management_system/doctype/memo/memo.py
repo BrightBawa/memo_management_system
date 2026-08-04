@@ -82,13 +82,22 @@ class Memo(Document):
                 self.amended_on = now_datetime()
             return
 
+        if previous_status == "Pending Approval" and self.can_current_user_approve():
+            stored = frappe.get_doc("Memo", self.name)
+            if stored._amendment_hash(exclude_tables={"action_points"}) != self._amendment_hash(
+                exclude_tables={"action_points"}
+            ):
+                frappe.throw(_("Approvers may only change Execution and Follow-up while approval is pending."))
+            return
+
         if getattr(self.flags, "memo_system_write", False):
             return
 
         frappe.throw(_("Only draft or amended memos can be edited."))
 
-    def _amendment_hash(self):
+    def _amendment_hash(self, exclude_tables=None):
         """Fingerprint business content while excluding workflow/audit metadata."""
+        exclude_tables = set(exclude_tables or [])
         fields = (
             "memo_category", "priority", "confidentiality", "requires_approval", "approver",
             "company", "department", "memo_date", "effective_date", "origin_employee",
@@ -98,6 +107,8 @@ class Memo(Document):
         )
         payload = {field: self.get(field) for field in fields}
         for table in ("recipients", "action_points", "reference_documents"):
+            if table in exclude_tables:
+                continue
             payload[table] = [
                 {key: value for key, value in row.as_dict().items() if key not in {
                     "name", "owner", "creation", "modified", "modified_by", "docstatus",
@@ -492,8 +503,10 @@ class Memo(Document):
             # the destination state's role check, ensure the approver has not
             # changed any memo business content in the same request.
             stored = frappe.get_doc("Memo", self.name)
-            if stored._amendment_hash() != self._amendment_hash():
-                frappe.throw(_("Approvers may only approve or reject this memo; its content cannot be changed."))
+            if stored._amendment_hash(exclude_tables={"action_points"}) != self._amendment_hash(
+                exclude_tables={"action_points"}
+            ):
+                frappe.throw(_("Approvers may only change Execution and Follow-up before deciding this memo."))
             self.flags.ignore_permissions = True
 
         self.flags.memo_system_write = True

@@ -49,6 +49,29 @@ const lockReadonlyGrids = (frm) => {
     routingGrid.refresh();
 };
 
+const configureExecutionAccess = (frm, capabilities = {}) => {
+    const canConfigure =
+        frm.doc.status === "Pending Approval" &&
+        (frm.doc.approver === frappe.session.user ||
+            capabilities.has_global_access ||
+            capabilities.has_approval_access);
+    const canView = canConfigure || frm.doc.status === "Approved";
+    const grid = frm.fields_dict.action_points?.grid;
+
+    frm.toggle_display("execution_section", canView);
+    frm.toggle_display("action_points", canView);
+    if (grid) {
+        grid.cannot_add_rows = !canConfigure;
+        grid.cannot_delete_rows = !canConfigure;
+        grid.toggle_enable("action_title", canConfigure);
+        grid.toggle_enable("assigned_user", canConfigure);
+        grid.toggle_enable("due_date", canConfigure);
+        grid.toggle_enable("priority", canConfigure);
+        grid.toggle_enable("action_details", canConfigure);
+        grid.refresh();
+    }
+};
+
 const setCurrentUserOrigin = async (frm) => {
     if (!frm.is_new() || frm.doc.origin_employee) {
         return;
@@ -201,23 +224,28 @@ frappe.ui.form.on("Memo", {
             },
         }));
         setUserQueries(frm);
+        configureExecutionAccess(frm);
     },
     async onload(frm) {
         setUserQueries(frm);
         lockReadonlyGrids(frm);
+        configureExecutionAccess(frm);
         await setCurrentUserOrigin(frm);
     },
     async refresh(frm) {
         setUserQueries(frm);
         lockReadonlyGrids(frm);
         if (frm.is_new()) {
+            configureExecutionAccess(frm);
             return;
         }
         const response = await frappe.call(
             "memo_management_system.memo_management_system.doctype.memo.memo.get_memo_capabilities",
             { name: frm.doc.name }
         );
-        addMemoButtons(frm, response.message || {});
+        const capabilities = response.message || {};
+        configureExecutionAccess(frm, capabilities);
+        addMemoButtons(frm, capabilities);
     },
     before_workflow_action(frm) {
         const action = frm.selected_workflow_action;
