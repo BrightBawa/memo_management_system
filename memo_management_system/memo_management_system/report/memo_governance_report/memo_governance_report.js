@@ -22,7 +22,7 @@ frappe.query_reports["Memo Governance Report"] = {
             fieldname: "status",
             label: __("Status"),
             fieldtype: "Select",
-            options: "\nDraft\nPending Approval\nApproved\nRejected\nCancelled",
+            options: "\nDraft\nPending Approval\nApproved\nRejected\nAmended\nCancelled",
         },
         {
             fieldname: "priority",

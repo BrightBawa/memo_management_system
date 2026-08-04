@@ -22,6 +22,9 @@
   "rejected_by",
   "rejected_on",
   "approval_remarks",
+  "amended_by",
+  "amended_on",
+  "rejection_snapshot_hash",
   "origin_section",
   "company",
   "department",
@@ -76,7 +79,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nPending Approval\nApproved\nRejected\nCancelled",
+   "options": "Draft\nPending Approval\nApproved\nRejected\nAmended\nCancelled",
    "read_only": 1
   },
   {
@@ -156,6 +159,27 @@
    "read_only": 1
   },
   {
+   "fieldname": "amended_by",
+   "fieldtype": "Link",
+   "label": "Last Amended By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_on",
+   "fieldtype": "Datetime",
+   "label": "Last Amended On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejection_snapshot_hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Rejection Snapshot Hash",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "origin_section",
    "fieldtype": "Section Break",
    "label": "Origin"
@@ -164,13 +188,15 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "read_only": 1
   },
   {
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
-   "options": "Department"
+   "options": "Department",
+   "read_only": 1
   },
   {
    "default": "Today",

@@ -20,7 +20,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Action",
-   "options": "Submitted for Approval\nApproved and Circulated\nRejected\nRe-circulated\nAcknowledged\nAction Point Updated",
+   "options": "Submitted for Approval\nApproved and Circulated\nRejected\nAmendment Started\nRe-circulated\nAcknowledged\nAction Point Updated",
    "read_only": 1,
    "reqd": 1
   },

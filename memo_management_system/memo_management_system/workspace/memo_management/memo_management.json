@@ -1,7 +1,20 @@
 {
  "app": "memo_management_system",
- "charts": [],
- "content": "[{\"id\":\"memo_header_overview\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Official Memo Workbench</b></span>\",\"col\":12}},{\"id\":\"memo_card_operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Memo Operations\",\"col\":4}},{\"id\":\"memo_card_governance\",\"type\":\"card\",\"data\":{\"card_name\":\"Approvals and Governance\",\"col\":4}},{\"id\":\"memo_card_reference\",\"type\":\"card\",\"data\":{\"card_name\":\"Related Documents\",\"col\":4}}]",
+ "charts": [
+  {
+   "chart_name": "Memo Daily Activity",
+   "label": "Memo Daily Activity"
+  },
+  {
+   "chart_name": "Memo Status Distribution",
+   "label": "Memo Status Distribution"
+  },
+  {
+   "chart_name": "Memo Category Distribution",
+   "label": "Memo Category Distribution"
+  }
+ ],
+ "content": "[{\"id\":\"memo_header_overview\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Official Memo Workbench</b></span>\",\"col\":12}},{\"id\":\"memo_management_dashboard\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Memo Management Dashboard\",\"col\":3}},{\"id\":\"memo_card_operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Memo Operations\",\"col\":3}},{\"id\":\"memo_card_governance\",\"type\":\"card\",\"data\":{\"card_name\":\"Approvals and Governance\",\"col\":3}},{\"id\":\"memo_card_reference\",\"type\":\"card\",\"data\":{\"card_name\":\"Related Documents\",\"col\":3}},{\"id\":\"memo_management_snapshot\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Live Snapshot</b></span>\",\"col\":12}},{\"id\":\"card_0\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Memos Today\",\"col\":3}},{\"id\":\"card_1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Memos This Week\",\"col\":3}},{\"id\":\"card_2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Memos This Month\",\"col\":3}},{\"id\":\"card_3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Memos Pending Approval\",\"col\":3}},{\"id\":\"chart_0\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Memo Daily Activity\",\"col\":6}},{\"id\":\"chart_1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Memo Status Distribution\",\"col\":6}},{\"id\":\"card_4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Urgent Memos\",\"col\":4}},{\"id\":\"chart_2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Memo Category Distribution\",\"col\":6}}]",
  "creation": "2026-07-10 13:58:55.029958",
  "custom_blocks": [],
  "docstatus": 0,
@@ -14,56 +27,6 @@
  "is_hidden": 0,
  "label": "Memo Management",
  "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Memo Operations",
-   "link_count": 0,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Memo",
-   "link_count": 0,
-   "link_to": "Memo",
-   "link_type": "DocType",
-   "onboard": 1,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Approvals and Governance",
-   "link_count": 0,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Memo Settings",
-   "link_count": 0,
-   "link_to": "Memo Settings",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Memo Governance Report",
-   "link_count": 0,
-   "link_to": "Memo Governance Report",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "Memo",
-   "type": "Link"
-  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -104,13 +67,85 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Approvals and Governance",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo Settings",
+   "link_count": 0,
+   "link_to": "Memo Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo Governance Report",
+   "link_count": 0,
+   "link_to": "Memo Governance Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Memo",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo Operations",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Memo",
+   "link_count": 0,
+   "link_to": "Memo",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-07-10 13:58:56.656805",
+ "modified": "2026-08-03 09:20:09.046455",
  "modified_by": "Administrator",
  "module": "Memo Management System",
  "name": "Memo Management",
- "number_cards": [],
+ "number_cards": [
+  {
+   "label": "Memos Today",
+   "number_card_name": "Memos Today"
+  },
+  {
+   "label": "Memos This Week",
+   "number_card_name": "Memos This Week"
+  },
+  {
+   "label": "Memos This Month",
+   "number_card_name": "Memos This Month"
+  },
+  {
+   "label": "Memos Pending Approval",
+   "number_card_name": "Memos Pending Approval"
+  },
+  {
+   "label": "Urgent Memos",
+   "number_card_name": "Urgent Memos"
+  }
+ ],
  "owner": "Administrator",
  "parent_page": "",
  "public": 1,
@@ -133,7 +168,15 @@
   }
  ],
  "sequence_id": 30.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "Memo Management Dashboard",
+   "link_to": "Memo Management Dashboard",
+   "type": "Dashboard"
+  }
+ ],
  "title": "Memo Management",
  "type": "Workspace"
 }

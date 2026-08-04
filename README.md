@@ -2,6 +2,19 @@
 
 A memo management system is a digital solution that helps users create, organize, store, and manage memos or notes efficiently. It streamlines communication and information tracking by allowing easy access, editing, categorization, and sharing of important memos within an app or organization.
 
+### Documentation
+
+- [Training Manual](./TRAINING_MANUAL.md)
+
+### Current Feature Set
+
+- formal memo creation with category, priority, confidentiality, and origin details
+- approval and rejection workflow with routing history
+- recipient circulation with optional acknowledgement tracking
+- follow-up action points with assignees, due dates, and status tracking
+- related document linking for records such as `Material Request` and `Purchase Order`
+- governance reporting and an `Official Memo` print format
+
 ### Installation
 
 You can install this app using the [bench](https://github.com/frappe/bench) CLI:

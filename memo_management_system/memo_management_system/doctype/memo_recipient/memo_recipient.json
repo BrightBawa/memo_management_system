@@ -7,9 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "recipient_type",
-  "employee",
-  "employee_name",
   "user_id",
+  "employee_name",
+  "employee",
   "designation",
   "department",
   "official_mail",
@@ -30,25 +30,24 @@
    "reqd": 1
   },
   {
-   "fieldname": "employee",
+   "fieldname": "user_id",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Employee",
-   "options": "Employee",
+   "label": "Recipient User",
+   "options": "User",
    "reqd": 1
   },
   {
-   "fetch_from": "employee.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "Employee Name",
+   "label": "Recipient Name",
    "read_only": 1
   },
   {
-   "fetch_from": "employee.user_id",
-   "fieldname": "user_id",
-   "fieldtype": "Data",
-   "label": "User ID",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Linked Employee",
+   "options": "Employee",
    "read_only": 1
   },
   {

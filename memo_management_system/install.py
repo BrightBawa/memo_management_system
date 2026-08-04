@@ -6,6 +6,7 @@ from memo_management_system.utils.memo import (
     cleanup_legacy_memo_artifacts,
     ensure_roles,
     setup_default_settings,
+    setup_memo_workflow,
     sync_memo_roles_for_existing_employees,
     upsert_default_print_format,
 )
@@ -50,6 +51,36 @@ def set_desk_roles():
         doc.save(ignore_permissions=True)
 
 
+def normalize_memo_user_permission():
+    """Let the controller authorize non-owner workflow writes.
+
+    The unrestricted row lets document-shared participants reach the
+    controller. Explicit document shares preserve access when link-level User
+    Permissions would otherwise hide a memo from its own creator.
+    """
+    for name in frappe.get_all(
+        "Custom DocPerm",
+        filters={"parent": "Memo", "role": "Memo User", "permlevel": 0, "if_owner": 0},
+        pluck="name",
+    ):
+        frappe.db.set_value(
+            "Custom DocPerm",
+            name,
+            {"if_owner": 0, "read": 1, "print": 1, "share": 1},
+            update_modified=False,
+        )
+
+    for name in frappe.get_all(
+        "Custom DocPerm",
+        filters={"parent": "Memo", "role": "Memo User", "permlevel": 0, "if_owner": 1},
+        pluck="name",
+    ):
+        frappe.delete_doc("Custom DocPerm", name, ignore_permissions=True, force=True)
+
+    for name in frappe.get_all("Memo", pluck="name"):
+        frappe.get_doc("Memo", name)._sync_participant_shares()
+
+
 def setup_workspace():
     sync_workspace_documents()
     set_desk_roles()
@@ -61,8 +92,10 @@ def after_install():
     setup_default_settings()
     sync_memo_roles_for_existing_employees()
     setup_workspace()
+    normalize_memo_user_permission()
     cleanup_legacy_memo_artifacts()
     upsert_default_print_format("Memo", PRINT_FORMAT_NAME)
+    setup_memo_workflow()
     frappe.db.commit()
 
 
@@ -71,6 +104,8 @@ def after_migrate():
     setup_default_settings()
     sync_memo_roles_for_existing_employees()
     setup_workspace()
+    normalize_memo_user_permission()
     cleanup_legacy_memo_artifacts()
     upsert_default_print_format("Memo", PRINT_FORMAT_NAME)
+    setup_memo_workflow()
     frappe.db.commit()

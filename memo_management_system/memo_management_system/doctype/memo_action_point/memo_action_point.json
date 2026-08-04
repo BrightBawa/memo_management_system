@@ -7,9 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "action_title",
-  "assigned_employee",
-  "assigned_employee_name",
   "assigned_user",
+  "assigned_employee_name",
+  "assigned_employee",
   "assigned_designation",
   "due_date",
   "priority",
@@ -28,25 +28,24 @@
    "reqd": 1
   },
   {
-   "fieldname": "assigned_employee",
+   "fieldname": "assigned_user",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Assigned Employee",
-   "options": "Employee",
+   "label": "Assigned User",
+   "options": "User",
    "reqd": 1
   },
   {
-   "fetch_from": "assigned_employee.employee_name",
    "fieldname": "assigned_employee_name",
    "fieldtype": "Data",
-   "label": "Assigned Employee Name",
+   "label": "Assigned User Name",
    "read_only": 1
   },
   {
-   "fetch_from": "assigned_employee.user_id",
-   "fieldname": "assigned_user",
-   "fieldtype": "Data",
-   "label": "Assigned User",
+   "fieldname": "assigned_employee",
+   "fieldtype": "Link",
+   "label": "Linked Employee",
+   "options": "Employee",
    "read_only": 1
   },
   {

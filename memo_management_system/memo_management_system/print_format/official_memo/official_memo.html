@@ -1,147 +1,276 @@
-<style>
-    .memo-table td {
-        padding: 6px 0;
-        vertical-align: top;
-    }
-</style>
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Droid+Serif&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Droid Serif", Georgia, serif;
+            font-size: 12px;
+            color: #000;
+        }
 
-<div>
-    {{ letter_head }}
+        .memo-table,
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-    <h2 style="margin-top: 24px;">Official Memo</h2>
+        .memo-table {
+            margin-top: 20px;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
 
-    <table class="memo-table" style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="width: 20%; font-weight: bold;">Memo No.</td>
-            <td>{{ doc.name }}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Status</td>
-            <td>{{ doc.status }}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Date</td>
-            <td>{{ frappe.utils.formatdate(doc.memo_date) }}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">From</td>
-            <td>{{ doc.originator_name }}{% if doc.originator_designation %} ({{ doc.originator_designation }}){% endif %}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Department</td>
-            <td>{{ doc.department or "" }}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Priority</td>
-            <td>{{ doc.priority }}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Confidentiality</td>
-            <td>{{ doc.confidentiality }}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Subject</td>
-            <td>{{ doc.subject }}</td>
-        </tr>
-    </table>
+        .memo-table td {
+            padding: 2px 0;
+            vertical-align: top;
+        }
 
-    <h4 style="margin-top: 20px;">Recipients</h4>
-    <ul>
-        {% for row in doc.recipients %}
-        <li>
-            {{ row.recipient_type }}: {{ row.employee_name or row.employee }}{% if row.designation %} ({{ row.designation }}){% endif %}
-            {% if row.requires_acknowledgement %}
-            - Ack: {{ row.acknowledgement_status }}{% if row.acknowledgement_due_date %} by {{ frappe.utils.formatdate(row.acknowledgement_due_date) }}{% endif %}
+        .memo-label {
+            width: 15%;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .memo-body {
+            margin-top: 20px;
+            line-height: 1.8;
+            text-align: justify;
+        }
+
+        .supplementary-section {
+            margin-top: 24px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            margin: 0 0 7px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #000;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .details-table th,
+        .details-table td {
+            padding: 5px 6px;
+            border: 1px solid #777;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        .details-table th {
+            font-weight: bold;
+        }
+
+        .compact-list {
+            margin: 4px 0 0 18px;
+            padding: 0;
+        }
+
+        .compact-list li {
+            margin-bottom: 4px;
+        }
+
+        .sign-off td {
+            border: 0;
+            border-bottom: 1px solid #999;
+            padding: 5px 0;
+        }
+
+        .sign-off .sign-off-label {
+            width: 22%;
+            font-weight: bold;
+        }
+
+        @media print {
+            .supplementary-section,
+            .details-table tr {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div>
+        {{ letter_head }}
+
+        <table class="memo-table">
+            <tr>
+                <td class="memo-label">FROM:</td>
+                <td>
+                    {{ doc.originator_name or doc.origin_employee or "" }}
+                    {% if doc.originator_designation %} — {{ doc.originator_designation }}{% endif %}
+                    {% if doc.department %}<br>{{ doc.department }}{% endif %}
+                </td>
+            </tr>
+
+            {% set to_recipients = [] %}
+            {% set cc_recipients = [] %}
+            {% for row in doc.recipients or [] %}
+                {% if row.recipient_type == "Cc" %}
+                    {% set _ = cc_recipients.append(row) %}
+                {% else %}
+                    {% set _ = to_recipients.append(row) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if to_recipients %}
+            <tr>
+                <td class="memo-label">TO:</td>
+                <td>
+                    {% for row in to_recipients %}
+                        {{ row.employee_name or row.employee }}{% if row.designation %} — {{ row.designation }}{% endif %}{% if row.department %}, {{ row.department }}{% endif %}{% if not loop.last %}<br>{% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
             {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
+
+            {% if cc_recipients %}
+            <tr>
+                <td class="memo-label">CC:</td>
+                <td>
+                    {% for row in cc_recipients %}
+                        {{ row.employee_name or row.employee }}{% if row.designation %} — {{ row.designation }}{% endif %}{% if row.department %}, {{ row.department }}{% endif %}{% if not loop.last %}<br>{% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endif %}
+
+            <tr>
+                <td class="memo-label">DATE:</td>
+                <td>{{ frappe.utils.formatdate(doc.memo_date) }}</td>
+            </tr>
+            <tr>
+                <td class="memo-label">REFERENCE:</td>
+                <td>{{ doc.name }}</td>
+            </tr>
+            <tr>
+                <td class="memo-label">SUBJECT:</td>
+                <td>{{ doc.subject }}</td>
+            </tr>
+        </table>
+
+        <hr style="border: none; border-top: 2px solid #000; margin: 10px 0;">
+    </div>
+
+    <div class="memo-body">
+        {{ doc.content }}
+    </div>
 
     {% if doc.summary %}
-    <h4>Summary</h4>
-    <p>{{ doc.summary }}</p>
+    <div class="supplementary-section">
+        <h4 class="section-title">Summary</h4>
+        <div style="line-height: 1.6;">{{ doc.summary }}</div>
+    </div>
     {% endif %}
 
-    <h4>Content</h4>
-    <div>{{ doc.content }}</div>
+    {% if doc.status or doc.memo_category or doc.priority or doc.confidentiality or doc.effective_date or doc.company %}
+    <div class="supplementary-section">
+        <h4 class="section-title">Memo Details</h4>
+        <table class="details-table">
+            <tr>
+                <th style="width: 18%;">Status</th>
+                <td style="width: 32%;">{{ doc.status or "" }}</td>
+                <th style="width: 18%;">Category</th>
+                <td style="width: 32%;">{{ doc.memo_category or "" }}</td>
+            </tr>
+            <tr>
+                <th>Priority</th>
+                <td>{{ doc.priority or "" }}</td>
+                <th>Classification</th>
+                <td>{{ doc.confidentiality or "" }}</td>
+            </tr>
+            {% if doc.effective_date or doc.company %}
+            <tr>
+                <th>Effective Date</th>
+                <td>{{ frappe.utils.formatdate(doc.effective_date) if doc.effective_date else "" }}</td>
+                <th>Company</th>
+                <td>{{ doc.company or "" }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+    {% endif %}
 
     {% if doc.action_points %}
-    <h4 style="margin-top: 20px;">Action Points</h4>
-    <table class="memo-table" style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="font-weight: bold;">Action</td>
-            <td style="font-weight: bold;">Assigned To</td>
-            <td style="font-weight: bold;">Due Date</td>
-            <td style="font-weight: bold;">Status</td>
-        </tr>
-        {% for row in doc.action_points %}
-        <tr>
-            <td>{{ row.action_title }}</td>
-            <td>{{ row.assigned_employee_name or row.assigned_employee }}{% if row.assigned_designation %} ({{ row.assigned_designation }}){% endif %}</td>
-            <td>{{ frappe.utils.formatdate(row.due_date) if row.due_date else "" }}</td>
-            <td>{{ row.status }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="supplementary-section">
+        <h4 class="section-title">Action Points</h4>
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th style="width: 34%;">Action</th>
+                    <th style="width: 29%;">Assigned To</th>
+                    <th style="width: 14%;">Due Date</th>
+                    <th style="width: 11%;">Priority</th>
+                    <th style="width: 12%;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in doc.action_points %}
+                <tr>
+                    <td>
+                        {{ row.action_title }}
+                        {% if row.action_details %}<br><span style="font-size: 10px;">{{ row.action_details }}</span>{% endif %}
+                    </td>
+                    <td>{{ row.assigned_employee_name or row.assigned_employee }}{% if row.assigned_designation %}<br><span style="font-size: 10px;">{{ row.assigned_designation }}</span>{% endif %}</td>
+                    <td>{{ frappe.utils.formatdate(row.due_date) if row.due_date else "" }}</td>
+                    <td>{{ row.priority or "" }}</td>
+                    <td>{{ row.status or "" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 
-    {% set core_references = [] %}
-    {% if doc.material_request %}
-        {% set _ = core_references.append("Material Request: " ~ doc.material_request) %}
-    {% endif %}
-    {% if doc.purchase_order %}
-        {% set _ = core_references.append("Purchase Order: " ~ doc.purchase_order) %}
-    {% endif %}
-
-    {% if core_references or doc.reference_documents %}
-    <h4 style="margin-top: 20px;">Related Documents</h4>
-    <ul>
-        {% for item in core_references %}
-        <li>{{ item }}</li>
-        {% endfor %}
-        {% for row in doc.reference_documents %}
-        <li>{{ row.reference_doctype }}: {{ row.reference_name }}{% if row.remarks %} - {{ row.remarks }}{% endif %}</li>
-        {% endfor %}
-    </ul>
+    {% if doc.material_request or doc.purchase_order or doc.reference_documents or doc.primary_attachment %}
+    <div class="supplementary-section">
+        <h4 class="section-title">References and Attachments</h4>
+        <ul class="compact-list">
+            {% if doc.material_request %}<li><strong>Material Request:</strong> {{ doc.material_request }}</li>{% endif %}
+            {% if doc.purchase_order %}<li><strong>Purchase Order:</strong> {{ doc.purchase_order }}</li>{% endif %}
+            {% for row in doc.reference_documents or [] %}
+            <li>
+                <strong>{{ row.relation_type or "Reference" }}:</strong>
+                {{ row.reference_doctype }} {{ row.reference_name }}{% if row.remarks %} — {{ row.remarks }}{% endif %}
+            </li>
+            {% endfor %}
+            {% if doc.primary_attachment %}<li><strong>Primary Attachment:</strong> {{ doc.primary_attachment }}</li>{% endif %}
+        </ul>
+    </div>
     {% endif %}
 
-    {% if doc.primary_attachment %}
-    <p style="margin-top: 20px;"><strong>Primary Attachment:</strong> {{ doc.primary_attachment }}</p>
+    {% if doc.prepared_by or doc.approved_by or doc.circulated_by or doc.approval_remarks %}
+    <div class="supplementary-section">
+        <h4 class="section-title">Official Sign-off</h4>
+        <table class="details-table sign-off">
+            {% if doc.prepared_by %}
+            <tr>
+                <td class="sign-off-label">Prepared By</td>
+                <td>{{ frappe.db.get_value("User", doc.prepared_by, "full_name") or doc.prepared_by }}{% if doc.prepared_on %} — {{ frappe.utils.format_datetime(doc.prepared_on) }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if doc.approved_by %}
+            <tr>
+                <td class="sign-off-label">Approved By</td>
+                <td>{{ frappe.db.get_value("User", doc.approved_by, "full_name") or doc.approved_by }}{% if doc.approved_on %} — {{ frappe.utils.format_datetime(doc.approved_on) }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if doc.circulated_by %}
+            <tr>
+                <td class="sign-off-label">Circulated By</td>
+                <td>{{ frappe.db.get_value("User", doc.circulated_by, "full_name") or doc.circulated_by }}{% if doc.circulated_on %} — {{ frappe.utils.format_datetime(doc.circulated_on) }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if doc.approval_remarks %}
+            <tr>
+                <td class="sign-off-label">Approval Remarks</td>
+                <td>{{ doc.approval_remarks }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
     {% endif %}
-
-    <h4 style="margin-top: 20px;">Digital Sign-off</h4>
-    <table class="memo-table" style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="width: 20%; font-weight: bold;">Prepared By</td>
-            <td>{{ frappe.utils.get_fullname(doc.prepared_by) if doc.prepared_by else "" }}{% if doc.prepared_on %} on {{ frappe.utils.format_datetime(doc.prepared_on) }}{% endif %}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Approved By</td>
-            <td>{{ frappe.utils.get_fullname(doc.approved_by) if doc.approved_by else "" }}{% if doc.approved_on %} on {{ frappe.utils.format_datetime(doc.approved_on) }}{% endif %}</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold;">Circulated By</td>
-            <td>{{ frappe.utils.get_fullname(doc.circulated_by) if doc.circulated_by else "" }}{% if doc.circulated_on %} on {{ frappe.utils.format_datetime(doc.circulated_on) }}{% endif %}</td>
-        </tr>
-    </table>
-
-    {% if doc.routing_history %}
-    <h4 style="margin-top: 20px;">Routing History</h4>
-    <table class="memo-table" style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="font-weight: bold;">Action</td>
-            <td style="font-weight: bold;">Actor</td>
-            <td style="font-weight: bold;">Time</td>
-            <td style="font-weight: bold;">Remarks</td>
-        </tr>
-        {% for row in doc.routing_history %}
-        <tr>
-            <td>{{ row.routing_action }}</td>
-            <td>{{ row.actor_name or row.actor }}</td>
-            <td>{{ frappe.utils.format_datetime(row.action_time) if row.action_time else "" }}</td>
-            <td>{{ row.remarks or "" }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
-</div>
+</body>
+</html>

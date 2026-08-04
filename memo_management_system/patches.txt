@@ -4,3 +4,4 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+memo_management_system.patches.normalize_memo_approval_workflow

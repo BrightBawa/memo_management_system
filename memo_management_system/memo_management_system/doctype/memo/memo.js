@@ -1,15 +1,18 @@
-const approvalRoles = ["System Manager", "Memo Approver", "Memo Manager", "Memo Administrator"];
+const setUserQueries = (frm) => {
+    const userFilters = {
+        enabled: 1,
+        user_type: "System User",
+    };
 
-const setEmployeeQuery = (frm) => {
     if (frm.fields_dict.recipients?.grid) {
-        frm.fields_dict.recipients.grid.get_field("employee").get_query = () => ({
-            filters: { status: "Active" },
+        frm.fields_dict.recipients.grid.get_field("user_id").get_query = () => ({
+            filters: userFilters,
         });
     }
 
     if (frm.fields_dict.action_points?.grid) {
-        frm.fields_dict.action_points.grid.get_field("assigned_employee").get_query = () => ({
-            filters: { status: "Active" },
+        frm.fields_dict.action_points.grid.get_field("assigned_user").get_query = () => ({
+            filters: userFilters,
         });
     }
 };
@@ -46,9 +49,30 @@ const lockReadonlyGrids = (frm) => {
     routingGrid.refresh();
 };
 
-const getAccessibleActionPoints = (frm) => {
+const setCurrentUserOrigin = async (frm) => {
+    if (!frm.is_new() || frm.doc.origin_employee) {
+        return;
+    }
+
+    const response = await frappe.call(
+        "memo_management_system.memo_management_system.doctype.memo.memo.get_current_origin_details"
+    );
+    const origin = response.message || {};
+    await frm.set_value({
+        prepared_by: origin.prepared_by,
+        origin_employee: origin.origin_employee,
+        originator_name: origin.originator_name,
+        originator_designation: origin.originator_designation,
+        department: origin.department,
+        company: origin.company,
+    });
+};
+
+const getAccessibleActionPoints = (frm, capabilities = {}) => {
     const canManageAll =
-        frm.doc.owner === frappe.session.user || frappe.user.has_role(approvalRoles);
+        frm.doc.owner === frappe.session.user ||
+        capabilities.has_global_access ||
+        capabilities.has_approval_access;
 
     return (frm.doc.action_points || []).filter((row) => {
         if (["Completed", "Cancelled"].includes(row.status)) {
@@ -59,70 +83,14 @@ const getAccessibleActionPoints = (frm) => {
     });
 };
 
-const addMemoButtons = (frm) => {
+const addMemoButtons = (frm, capabilities = {}) => {
     if (frm.is_new()) {
         return;
     }
 
-    if (["Draft", "Rejected"].includes(frm.doc.status) && frm.perm[0]?.write) {
-        const label = frm.doc.requires_approval ? __("Submit for Approval") : __("Approve and Circulate");
-        frm.add_custom_button(label, () => {
-            frappe.call("memo_management_system.memo_management_system.doctype.memo.memo.submit_for_approval", {
-                name: frm.doc.name,
-            }).then(() => frm.reload_doc());
-        });
-    }
-
-    const canApprove =
-        frm.doc.status === "Pending Approval" &&
-        (frm.doc.approver === frappe.session.user || frappe.user.has_role(approvalRoles));
-
-    if (canApprove) {
-        frm.add_custom_button(__("Approve Memo"), () => {
-            frappe.prompt(
-                [
-                    {
-                        fieldname: "remarks",
-                        fieldtype: "Small Text",
-                        label: __("Approval Remarks"),
-                    },
-                ],
-                (values) => {
-                    frappe.call("memo_management_system.memo_management_system.doctype.memo.memo.approve_memo", {
-                        name: frm.doc.name,
-                        remarks: values.remarks,
-                    }).then(() => frm.reload_doc());
-                },
-                __("Approve Memo"),
-                __("Approve")
-            );
-        });
-
-        frm.add_custom_button(__("Reject Memo"), () => {
-            frappe.prompt(
-                [
-                    {
-                        fieldname: "remarks",
-                        fieldtype: "Small Text",
-                        label: __("Rejection Remarks"),
-                        reqd: 1,
-                    },
-                ],
-                (values) => {
-                    frappe.call("memo_management_system.memo_management_system.doctype.memo.memo.reject_memo", {
-                        name: frm.doc.name,
-                        remarks: values.remarks,
-                    }).then(() => frm.reload_doc());
-                },
-                __("Reject Memo"),
-                __("Reject")
-            );
-        });
-    }
-
     const canRecirculate =
         frm.doc.status === "Approved" &&
-        (frm.doc.owner === frappe.session.user || frappe.user.has_role(approvalRoles));
+        capabilities.can_recirculate;
 
     if (canRecirculate) {
         frm.add_custom_button(__("Re-circulate Memo"), () => {
@@ -177,11 +145,12 @@ const addMemoButtons = (frm) => {
         });
     }
 
-    const actionPoints = getAccessibleActionPoints(frm);
+    const actionPoints =
+        frm.doc.status === "Approved" ? getAccessibleActionPoints(frm, capabilities) : [];
     if (actionPoints.length) {
         const actionPointOptions = actionPoints.map(
             (row) =>
-                `${row.name} :: ${row.action_title} - ${row.assigned_employee_name || row.assigned_employee} (${row.status})`
+                `${row.name} :: ${row.action_title} - ${row.assigned_employee_name || row.assigned_user} (${row.status})`
         );
 
         frm.add_custom_button(__("Update Action Point"), () => {
@@ -231,16 +200,77 @@ frappe.ui.form.on("Memo", {
                 user_type: "System User",
             },
         }));
-        setEmployeeQuery(frm);
+        setUserQueries(frm);
     },
-    onload(frm) {
-        setEmployeeQuery(frm);
+    async onload(frm) {
+        setUserQueries(frm);
         lockReadonlyGrids(frm);
+        await setCurrentUserOrigin(frm);
     },
-    refresh(frm) {
-        setEmployeeQuery(frm);
+    async refresh(frm) {
+        setUserQueries(frm);
         lockReadonlyGrids(frm);
-        addMemoButtons(frm);
+        if (frm.is_new()) {
+            return;
+        }
+        const response = await frappe.call(
+            "memo_management_system.memo_management_system.doctype.memo.memo.get_memo_capabilities",
+            { name: frm.doc.name }
+        );
+        addMemoButtons(frm, response.message || {});
+    },
+    before_workflow_action(frm) {
+        const action = frm.selected_workflow_action;
+        if (!["Approve Memo", "Reject Memo"].includes(action)) {
+            return Promise.resolve();
+        }
+
+        // Frappe freezes the page before running this hook. A prompt opened
+        // while that overlay is present looks disabled and cannot reliably
+        // receive pointer events, so leave the page interactive while asking
+        // for remarks.
+        frappe.dom.unfreeze();
+
+        return new Promise((resolve, reject) => {
+            let submitted = false;
+            const dialog = frappe.prompt(
+                [{
+                    fieldname: "remarks",
+                    fieldtype: "Small Text",
+                    label: action === "Reject Memo" ? __("Rejection Remarks") : __("Approval Remarks"),
+                    reqd: action === "Reject Memo" ? 1 : 0,
+                }],
+                (values) => {
+                    submitted = true;
+                    frappe.call({
+                        method: "memo_management_system.memo_management_system.doctype.memo.memo.set_workflow_remarks",
+                        args: {name: frm.doc.name, remarks: values.remarks || ""},
+                    }).then((response) => {
+                        // Keep the browser model aligned as well. The workflow
+                        // task has a database fallback because Frappe may omit
+                        // read-only fields while serializing frm.doc.
+                        frm.doc.approval_remarks = response.message.remarks;
+                        resolve();
+                    }).catch((error) => {
+                        frappe.dom.unfreeze();
+                        reject(error);
+                    });
+                },
+                __(action),
+                action === "Reject Memo" ? __("Reject") : __("Approve")
+            );
+            dialog.onhide = () => {
+                // frappe.prompt hides its dialog immediately before invoking
+                // the submit callback. Defer the cancellation check so a
+                // normal Approve/Reject click can mark the prompt submitted.
+                setTimeout(() => {
+                    if (!submitted) {
+                        frappe.dom.unfreeze();
+                        reject(new Error(__("Workflow action cancelled.")));
+                    }
+                }, 0);
+            };
+        });
     },
     require_recipient_acknowledgement(frm) {
         syncRecipientAcknowledgementDefaults(frm);
