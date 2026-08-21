@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2026-07-10 00:00:00.000000",
+ "creation": "2026-08-04 00:26:23.030347",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -281,8 +281,7 @@
    "fieldname": "recipients",
    "fieldtype": "Table",
    "label": "Recipients",
-   "options": "Memo recipient",
-   "reqd": 1
+   "options": "Memo recipient"
   },
   {
    "fieldname": "execution_section",
@@ -372,10 +371,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-10 00:00:00.000000",
+ "modified": "2026-08-21 06:35:32.306012",
  "modified_by": "Administrator",
  "module": "Memo Management System",
  "name": "Memo",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
