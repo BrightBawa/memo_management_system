@@ -82,15 +82,19 @@ class Memo(Document):
                 self.amended_on = now_datetime()
             return
 
+        # Workflow side effects validate the browser-supplied business content
+        # before setting this flag.  Honour the flag before re-running the
+        # pending-approval comparison: validation for the destination state can
+        # legitimately update recipient acknowledgement/circulation fields.
+        if getattr(self.flags, "memo_system_write", False):
+            return
+
         if previous_status == "Pending Approval" and self.can_current_user_approve():
             stored = frappe.get_doc("Memo", self.name)
             if stored._amendment_hash(exclude_tables={"action_points"}) != self._amendment_hash(
                 exclude_tables={"action_points"}
             ):
                 frappe.throw(_("Approvers may only change Execution and Follow-up while approval is pending."))
-            return
-
-        if getattr(self.flags, "memo_system_write", False):
             return
 
         frappe.throw(_("Only draft or amended memos can be edited."))
