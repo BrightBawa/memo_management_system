@@ -5,6 +5,28 @@ from frappe.tests.utils import FrappeTestCase
 
 
 class TestMemo(FrappeTestCase):
+    @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.frappe.db.get_value",
+        return_value="Pending Approval",
+    )
+    def test_workflow_system_write_skips_second_approval_content_check(self, _get_value):
+        memo = frappe.get_doc(
+            {
+                "doctype": "Memo",
+                "name": "MEMO-TEST-APPROVAL",
+                "status": "Approved",
+                "approver": "approver@example.com",
+            }
+        )
+        memo.flags.memo_system_write = True
+
+        with patch(
+            "memo_management_system.memo_management_system.doctype.memo.memo.frappe.get_doc"
+        ) as get_doc:
+            memo.before_save()
+
+        get_doc.assert_not_called()
+
     @patch("memo_management_system.api.permissions.frappe.get_roles")
     def test_restricted_memo_blocks_export_and_email_for_manager(self, get_roles):
         from memo_management_system.api.permissions import has_memo_permission
