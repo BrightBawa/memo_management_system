@@ -29,6 +29,7 @@ def get_memo_permission_query_conditions(user=None):
     participant_condition = (
         f"(`tabMemo`.`owner` = {user_value} "
         f"or `tabMemo`.`approver` = {user_value} "
+        f"or `tabMemo`.`secondary_approver` = {user_value} "
         f"{recipient_clause})"
     )
 
@@ -93,7 +94,11 @@ def has_memo_permission(doc, user=None, permission_type=None):
         # Workflow actions require write permission before their transition
         # conditions and controller checks are evaluated.
         if doc.status == "Pending Approval":
-            return doc.approver == user or has_approval_access(user) or has_global_access(user)
+            return (
+                user in {doc.approver, doc.secondary_approver}
+                or has_approval_access(user)
+                or has_global_access(user)
+            )
 
         # Rejected needs write permission only so Frappe can execute the
         # Rejected -> Amended workflow transition. Memo.before_save still
@@ -113,7 +118,7 @@ def _has_role(user, role):
 
 
 def _can_access_memo(doc, user):
-    if doc.owner == user or doc.approver == user:
+    if doc.owner == user or user in {doc.approver, doc.secondary_approver}:
         return True
 
     return any(row.user_id == user for row in doc.recipients or [])

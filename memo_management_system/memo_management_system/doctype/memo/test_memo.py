@@ -6,6 +6,42 @@ from frappe.tests.utils import FrappeTestCase
 
 class TestMemo(FrappeTestCase):
     @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.has_global_access",
+        return_value=False,
+    )
+    @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.has_approval_access",
+        return_value=False,
+    )
+    @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.get_memo_settings"
+    )
+    def test_ordinary_user_cannot_disable_required_approval(
+        self, get_settings, _approval_access, _global_access
+    ):
+        get_settings.return_value = frappe._dict({"require_approval_by_default": 1})
+        memo = frappe.get_doc({"doctype": "Memo", "requires_approval": 0})
+
+        self.assertRaises(
+            frappe.PermissionError, memo._validate_approval_requirement
+        )
+
+    @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.has_approval_access",
+        return_value=True,
+    )
+    @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.get_memo_settings"
+    )
+    def test_authorized_approver_can_disable_required_approval(
+        self, get_settings, _approval_access
+    ):
+        get_settings.return_value = frappe._dict({"require_approval_by_default": 1})
+        memo = frappe.get_doc({"doctype": "Memo", "requires_approval": 0})
+
+        memo._validate_approval_requirement()
+
+    @patch(
         "memo_management_system.memo_management_system.doctype.memo.memo.frappe.db.get_value",
         return_value="Pending Approval",
     )
@@ -110,6 +146,50 @@ class TestMemo(FrappeTestCase):
             has_memo_permission(memo, user="other@example.com", permission_type="write")
         )
 
+    @patch("memo_management_system.api.permissions.has_approval_access", return_value=False)
+    @patch("memo_management_system.api.permissions.has_global_access", return_value=False)
+    def test_secondary_approver_has_same_pending_memo_access(self, _global_access, _approval_access):
+        from memo_management_system.api.permissions import has_memo_permission
+
+        memo = frappe._dict(
+            {
+                "owner": "author@example.com",
+                "approver": "primary@example.com",
+                "secondary_approver": "secondary@example.com",
+                "status": "Pending Approval",
+                "confidentiality": "Internal",
+                "recipients": [],
+            }
+        )
+        self.assertTrue(
+            has_memo_permission(
+                memo, user="secondary@example.com", permission_type="read"
+            )
+        )
+        self.assertTrue(
+            has_memo_permission(
+                memo, user="secondary@example.com", permission_type="write"
+            )
+        )
+
+    @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.has_approval_access",
+        return_value=False,
+    )
+    @patch(
+        "memo_management_system.memo_management_system.doctype.memo.memo.has_global_access",
+        return_value=False,
+    )
+    def test_secondary_approver_can_decide_memo(self, _global_access, _approval_access):
+        memo = frappe.get_doc(
+            {
+                "doctype": "Memo",
+                "approver": "primary@example.com",
+                "secondary_approver": "secondary@example.com",
+            }
+        )
+        self.assertTrue(memo.can_current_user_approve("secondary@example.com"))
+
     def test_requires_to_recipient(self):
         memo = frappe.get_doc(
             {
@@ -156,6 +236,43 @@ class TestMemo(FrappeTestCase):
             side_effect=fake_exists,
         ):
             self.assertRaises(frappe.ValidationError, memo.validate)
+
+    def test_rejects_empty_memo_attachment_row(self):
+        memo = frappe.get_doc(
+            {
+                "doctype": "Memo",
+                "subject": "Test Memo",
+                "content": "<p>Hello</p>",
+                "recipients": [{"recipient_type": "To", "user_id": "recipient@example.com"}],
+                "memo_attachments": [{"description": "Missing upload"}],
+            }
+        )
+
+        with patch(
+            "memo_management_system.memo_management_system.doctype.memo.memo.frappe.db.exists",
+            return_value=True,
+        ):
+            self.assertRaises(frappe.ValidationError, memo.validate)
+
+    def test_memo_attachments_are_part_of_amendment_hash(self):
+        first = frappe.get_doc(
+            {
+                "doctype": "Memo",
+                "memo_attachments": [
+                    {"description": "Budget", "attachment": "/files/budget.pdf"}
+                ],
+            }
+        )
+        second = frappe.get_doc(
+            {
+                "doctype": "Memo",
+                "memo_attachments": [
+                    {"description": "Minutes", "attachment": "/files/minutes.pdf"}
+                ],
+            }
+        )
+
+        self.assertNotEqual(first._amendment_hash(), second._amendment_hash())
 
     def test_rejects_action_point_due_date_before_memo_date(self):
         memo = frappe.get_doc(

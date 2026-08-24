@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2026-08-04 00:26:23.030347",
+ "creation": "2026-08-21 13:43:16.469647",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -13,18 +13,6 @@
   "column_break_identity",
   "priority",
   "confidentiality",
-  "requires_approval",
-  "approval_section",
-  "approver",
-  "approved_by",
-  "approved_on",
-  "column_break_approval",
-  "rejected_by",
-  "rejected_on",
-  "approval_remarks",
-  "amended_by",
-  "amended_on",
-  "rejection_snapshot_hash",
   "origin_section",
   "company",
   "department",
@@ -34,30 +22,52 @@
   "origin_employee",
   "originator_name",
   "originator_designation",
+  "recipient_section",
+  "recipients",
+  "require_recipient_acknowledgement",
+  "acknowledgement_due_date",
   "content_section",
   "subject",
   "summary",
   "content",
-  "recipient_section",
-  "require_recipient_acknowledgement",
-  "acknowledgement_due_date",
-  "column_break_recipient",
-  "recipients",
+  "approval_section",
+  "requires_approval",
+  "approver",
+  "approver_designation",
+  "approver_employee",
+  "column_break_approval",
+  "secondary_approver",
+  "secondary_approver_designation",
+  "secondary_approver_employee",
   "execution_section",
   "action_points",
   "routing_history",
   "related_documents_section",
   "material_request",
   "purchase_order",
+  "memo_attachments",
   "column_break_related",
-  "primary_attachment",
   "reference_documents",
+  "primary_attachment",
   "sign_off_section",
   "prepared_by",
   "prepared_on",
   "column_break_sign_off",
   "circulated_by",
-  "circulated_on"
+  "circulated_on",
+  "amended_from",
+  "section_break_uhjv",
+  "rejected_by",
+  "rejection_snapshot_hash",
+  "column_break_otua",
+  "rejected_on",
+  "section_break_ohvf",
+  "approved_by",
+  "approval_remarks",
+  "column_break_wmna",
+  "approved_on",
+  "amended_by",
+  "amended_on"
  ],
  "fields": [
   {
@@ -68,10 +78,10 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Series",
    "options": "MEMO-.YYYY.-",
    "print_hide": 1,
-   "reqd": 1,
    "set_only_once": 1
   },
   {
@@ -109,7 +119,8 @@
    "default": "1",
    "fieldname": "requires_approval",
    "fieldtype": "Check",
-   "label": "Requires Approval"
+   "label": "Requires Approval",
+   "permlevel": 1
   },
   {
    "fieldname": "approval_section",
@@ -121,6 +132,38 @@
    "fieldtype": "Link",
    "label": "Approver",
    "options": "User"
+  },
+  {
+   "fieldname": "approver_designation",
+   "fieldtype": "Data",
+   "label": "Approver Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approver_employee",
+   "fieldtype": "Link",
+   "label": "Approver Employee ID",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "secondary_approver",
+   "fieldtype": "Link",
+   "label": "Secondary Approver",
+   "options": "User"
+  },
+  {
+   "fieldname": "secondary_approver_designation",
+   "fieldtype": "Data",
+   "label": "Secondary Approver Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "secondary_approver_employee",
+   "fieldtype": "Link",
+   "label": "Secondary Approver Employee ID",
+   "options": "Employee",
+   "read_only": 1
   },
   {
    "fieldname": "approved_by",
@@ -274,10 +317,6 @@
    "label": "Acknowledgement Due Date"
   },
   {
-   "fieldname": "column_break_recipient",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "recipients",
    "fieldtype": "Table",
    "label": "Recipients",
@@ -325,7 +364,9 @@
   {
    "fieldname": "primary_attachment",
    "fieldtype": "Attach",
-   "label": "Primary Attachment"
+   "hidden": 1,
+   "label": "Primary Attachment (Legacy)",
+   "read_only": 1
   },
   {
    "fieldname": "reference_documents",
@@ -367,11 +408,48 @@
    "fieldtype": "Datetime",
    "label": "Circulated On",
    "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Memo",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_ohvf",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Approvers Details"
+  },
+  {
+   "fieldname": "section_break_uhjv",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Rejecter Details"
+  },
+  {
+   "fieldname": "column_break_otua",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wmna",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "memo_attachments",
+   "fieldtype": "Table",
+   "label": "Memo Attachments",
+   "options": "Memo Attachments"
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-08-21 06:35:32.306012",
+ "modified": "2026-08-24 11:32:58.910837",
  "modified_by": "Administrator",
  "module": "Memo Management System",
  "name": "Memo",
@@ -388,6 +466,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -400,6 +479,7 @@
    "report": 1,
    "role": "Memo Administrator",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -412,6 +492,7 @@
    "report": 1,
    "role": "Memo Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -421,7 +502,9 @@
    "read": 1,
    "report": 1,
    "role": "Memo Approver",
-   "share": 1
+   "share": 1,
+   "submit": 1,
+   "write": 1
   },
   {
    "create": 1,
@@ -432,6 +515,7 @@
    "report": 1,
    "role": "Memo User",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

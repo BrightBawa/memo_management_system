@@ -42,6 +42,7 @@ class Memo(Document):
         self._set_recipient_details()
         self._set_action_point_details()
         self._set_default_approver()
+        self._set_approver_details()
 
     def validate(self):
         self.subject = cstr(self.subject).strip()
@@ -57,6 +58,8 @@ class Memo(Document):
             frappe.throw(_("Memo content is required."))
         if self.status not in MEMO_STATUSES:
             frappe.throw(_("Invalid memo status."))
+        if self.approver and self.approver == self.secondary_approver:
+            frappe.throw(_("Primary and secondary approvers must be different users."))
         if self.effective_date and self.memo_date and self.effective_date < self.memo_date:
             frappe.throw(_("Effective date cannot be earlier than the memo date."))
         if (
@@ -67,9 +70,35 @@ class Memo(Document):
         ):
             frappe.throw(_("Acknowledgement due date cannot be earlier than the memo date."))
 
+        self._validate_approval_requirement()
         self._validate_recipients()
         self._validate_links()
         self._validate_action_points()
+
+    def _validate_approval_requirement(self):
+        """Prevent client-side confirmation from being bypassed by direct writes."""
+        if cint(self.requires_approval):
+            return
+
+        settings_require_approval = cint(get_memo_settings().require_approval_by_default)
+        previously_required = False
+        if not self.is_new():
+            previously_required = cint(
+                frappe.db.get_value("Memo", self.name, "requires_approval")
+            )
+
+        # A no-approval default remains available to ordinary memo authors. If
+        # approval is the configured default (or was already required on this
+        # memo), only an approval/global role may override that control.
+        if not (settings_require_approval or previously_required):
+            return
+        if has_approval_access() or has_global_access():
+            return
+
+        frappe.throw(
+            _("Only an authorized approver or memo manager can disable approval."),
+            frappe.PermissionError,
+        )
 
     def before_save(self):
         if self.is_new():
@@ -104,13 +133,15 @@ class Memo(Document):
         exclude_tables = set(exclude_tables or [])
         fields = (
             "memo_category", "priority", "confidentiality", "requires_approval", "approver",
+            "approver_designation", "approver_employee", "secondary_approver",
+            "secondary_approver_designation", "secondary_approver_employee",
             "company", "department", "memo_date", "effective_date", "origin_employee",
             "originator_name", "originator_designation", "subject", "summary", "content",
             "require_recipient_acknowledgement", "acknowledgement_due_date", "material_request",
             "purchase_order", "primary_attachment",
         )
         payload = {field: self.get(field) for field in fields}
-        for table in ("recipients", "action_points", "reference_documents"):
+        for table in ("recipients", "action_points", "reference_documents", "memo_attachments"):
             if table in exclude_tables:
                 continue
             payload[table] = [
@@ -272,6 +303,26 @@ class Memo(Document):
         if approver_user:
             self.approver = approver_user
 
+    def _set_approver_details(self):
+        for user_field, employee_field, designation_field in (
+            ("approver", "approver_employee", "approver_designation"),
+            ("secondary_approver", "secondary_approver_employee", "secondary_approver_designation"),
+        ):
+            user = self.get(user_field)
+            employee = frappe.db.get_value(
+                "Employee",
+                {"user_id": user, "status": "Active"},
+                ["name", "designation"],
+                as_dict=True,
+            ) if user else None
+            self.set(employee_field, employee.name if employee else None)
+            self.set(designation_field, employee.designation if employee else None)
+
+    def _approvers(self):
+        return list(dict.fromkeys(
+            user for user in (self.approver, self.secondary_approver) if user
+        ))
+
     def _default_acknowledgement_status(self, row):
         if not row.requires_acknowledgement:
             return "Not Required"
@@ -368,6 +419,18 @@ class Memo(Document):
                 )
             seen.add(key)
 
+        seen_attachments = set()
+        for row in self.memo_attachments or []:
+            row.description = cstr(row.description).strip()
+            row.attachment = cstr(row.attachment).strip()
+            if not row.attachment:
+                frappe.throw(_("Each memo attachment row must include an uploaded file."))
+            if row.attachment in seen_attachments:
+                frappe.throw(
+                    _("Duplicate memo attachment detected: {0}.").format(row.attachment)
+                )
+            seen_attachments.add(row.attachment)
+
     def _validate_action_points(self):
         seen = set()
 
@@ -400,7 +463,7 @@ class Memo(Document):
 
     def can_current_user_approve(self, user=None):
         user = user or frappe.session.user
-        return user == self.approver or has_approval_access(user) or has_global_access(user)
+        return user in self._approvers() or has_approval_access(user) or has_global_access(user)
 
     def can_current_user_recirculate(self, user=None):
         user = user or frappe.session.user
@@ -444,6 +507,9 @@ class Memo(Document):
 
     def _save_from_system_action(self):
         self.flags.memo_system_write = True
+        # Dedicated operational actions may update acknowledgements, routing
+        # history, circulation, and action-point progress after submission.
+        self.flags.ignore_validate_update_after_submit = True
         self.save(ignore_permissions=True)
 
     def apply_workflow_transition_side_effects(self):
@@ -530,7 +596,7 @@ class Memo(Document):
             )
             self.add_comment("Info", _("Memo submitted by {0} for approval.").format(get_fullname(actor)))
             self._notify_users(
-                users=[self.approver], emails=[],
+                users=self._approvers(), emails=[],
                 subject=_("Memo Awaiting Approval: {0}").format(self.subject),
                 heading=_("A memo is awaiting your approval."),
             )
@@ -587,14 +653,15 @@ class Memo(Document):
 
     def _assign_approval_todo(self):
         """Put a pending memo in the selected approver's assignment dashboard."""
-        if not self.approver:
+        approvers = self._approvers()
+        if not approvers:
             return
 
         from frappe.desk.form.assign_to import _add
 
         _add(
             {
-                "assign_to": [self.approver],
+                "assign_to": approvers,
                 "doctype": self.doctype,
                 "name": self.name,
                 "description": _("Approve or reject memo {0}: {1}").format(self.name, self.subject),
@@ -606,21 +673,23 @@ class Memo(Document):
 
     def _set_approval_share(self, write=False):
         """Grant access only to this memo and remove transition write afterward."""
-        if not self.approver:
+        approvers = self._approvers()
+        if not approvers:
             return
 
         from frappe.share import add_docshare
 
-        add_docshare(
-            self.doctype,
-            self.name,
-            user=self.approver,
-            read=1,
-            write=1 if write else 0,
-            share=1,
-            notify=0,
-            flags={"ignore_share_permission": True},
-        )
+        for approver in approvers:
+            add_docshare(
+                self.doctype,
+                self.name,
+                user=approver,
+                read=1,
+                write=1 if write else 0,
+                share=1,
+                notify=0,
+                flags={"ignore_share_permission": True},
+            )
 
     def _set_owner_share(self):
         """Keep this memo accessible to its creator despite User Permissions."""
@@ -644,7 +713,7 @@ class Memo(Document):
         """Give each memo participant read, print, and share access to this memo only."""
         from frappe.share import add_docshare
 
-        participants = {self.owner, self.approver}
+        participants = {self.owner, *self._approvers()}
         participants.update(row.user_id for row in (self.recipients or []) if row.user_id)
         participants.update(row.assigned_user for row in (self.action_points or []) if row.assigned_user)
 
@@ -655,7 +724,7 @@ class Memo(Document):
                 user=user,
                 read=1,
                 write=1 if user == self.owner or (
-                    self.status == "Pending Approval" and user == self.approver
+                    self.status == "Pending Approval" and user in self._approvers()
                 ) else 0,
                 share=1,
                 notify=0,
@@ -667,144 +736,6 @@ class Memo(Document):
         from frappe.desk.form.assign_to import close_all_assignments
 
         close_all_assignments(self.doctype, self.name, ignore_permissions=True)
-
-    def submit_for_approval_action(self):
-        if frappe.session.user != self.owner and not has_global_access():
-            frappe.throw(_("Only the memo owner can submit this memo."), frappe.PermissionError)
-
-        if self.status not in EDITABLE_STATUSES:
-            frappe.throw(_("Only draft or amended memos can be submitted."))
-
-        if self.status == "Amended" and (
-            not self.amended_on or not self._has_meaningful_amendment()
-        ):
-            frappe.throw(_("Modify and save the rejected memo before resubmitting it."))
-
-        if self.requires_approval:
-            self._set_default_approver()
-            if not self.approver:
-                frappe.throw(_("Set an approver before submitting this memo for approval."))
-
-            self.status = "Pending Approval"
-            self.approved_by = None
-            self.approved_on = None
-            self.approval_remarks = ""
-            self._clear_circulation_state()
-            self._append_routing_log(
-                "Submitted for Approval",
-                actor=frappe.session.user,
-                target_user=self.approver,
-                remarks=_("Memo submitted for approval."),
-            )
-        else:
-            self.status = "Approved"
-            self.approved_by = frappe.session.user
-            self.approved_on = now_datetime()
-            self.approval_remarks = ""
-            self._mark_ready_for_circulation(frappe.session.user)
-            self._append_routing_log(
-                "Approved and Circulated",
-                actor=frappe.session.user,
-                remarks=_("Memo approved automatically and circulated."),
-            )
-
-        self._save_from_system_action()
-        self.add_comment(
-            "Info",
-            _("Memo submitted by {0} and moved to status {1}.").format(
-                get_fullname(frappe.session.user), self.status
-            ),
-        )
-
-        if self.status == "Pending Approval":
-            self._notify_users(
-                users=[self.approver],
-                emails=[],
-                subject=_("Memo Awaiting Approval: {0}").format(self.subject),
-                heading=_("A memo is awaiting your approval."),
-            )
-        else:
-            self._notify_recipients(
-                _("Approved Memo: {0}").format(self.subject),
-                _("A memo has been approved and is now available to recipients."),
-            )
-
-        return {"status": self.status, "name": self.name}
-
-    def approve_action(self, remarks=None):
-        if not self.can_current_user_approve():
-            frappe.throw(_("You do not have permission to approve this memo."), frappe.PermissionError)
-
-        if self.status != "Pending Approval":
-            frappe.throw(_("Only memos pending approval can be approved."))
-
-        self.status = "Approved"
-        self.approved_by = frappe.session.user
-        self.approved_on = now_datetime()
-        self.rejected_by = None
-        self.rejected_on = None
-        self.approval_remarks = cstr(remarks).strip()
-        self._mark_ready_for_circulation(frappe.session.user)
-        self._append_routing_log(
-            "Approved and Circulated",
-            actor=frappe.session.user,
-            remarks=self.approval_remarks or _("Memo approved and circulated."),
-        )
-        self._save_from_system_action()
-        self.add_comment(
-            "Info",
-            _("Memo approved by {0}.").format(get_fullname(frappe.session.user)),
-        )
-
-        self._notify_recipients(
-            _("Approved Memo: {0}").format(self.subject),
-            _("A memo addressed to you has been approved."),
-        )
-        self._notify_users(
-            users=[self.owner],
-            emails=[],
-            subject=_("Your memo was approved: {0}").format(self.subject),
-            heading=_("Your memo has been approved."),
-        )
-        return {"status": self.status, "name": self.name}
-
-    def reject_action(self, remarks):
-        if not self.can_current_user_approve():
-            frappe.throw(_("You do not have permission to reject this memo."), frappe.PermissionError)
-
-        if self.status != "Pending Approval":
-            frappe.throw(_("Only memos pending approval can be rejected."))
-
-        remarks = cstr(remarks).strip()
-        if not remarks:
-            frappe.throw(_("Enter rejection remarks before rejecting the memo."))
-
-        self.status = "Rejected"
-        self.rejected_by = frappe.session.user
-        self.rejected_on = now_datetime()
-        self.approved_by = None
-        self.approved_on = None
-        self.approval_remarks = remarks
-        self._clear_circulation_state()
-        self._append_routing_log(
-            "Rejected",
-            actor=frappe.session.user,
-            target_user=self.owner,
-            remarks=remarks,
-        )
-        self._save_from_system_action()
-        self.add_comment(
-            "Info",
-            _("Memo rejected by {0}.").format(get_fullname(frappe.session.user)),
-        )
-
-        self._notify_users(
-            users=[self.owner],
-            emails=[],
-            subject=_("Your memo was rejected: {0}").format(self.subject),
-            heading=_("Your memo was rejected."),
-        )
-        return {"status": self.status, "name": self.name}
 
     def recirculate_action(self, remarks=None):
         if not self.can_current_user_recirculate():
@@ -866,9 +797,7 @@ class Memo(Document):
             _("Memo acknowledged by {0}.").format(get_fullname(frappe.session.user)),
         )
 
-        notify_users = [self.owner]
-        if self.approver and self.approver not in notify_users:
-            notify_users.append(self.approver)
+        notify_users = list(dict.fromkeys([self.owner, *self._approvers()]))
 
         self._notify_users(
             users=notify_users,
@@ -920,8 +849,7 @@ class Memo(Document):
         notify_users = [self.owner]
         if row.assigned_user and row.assigned_user not in notify_users:
             notify_users.append(row.assigned_user)
-        if self.approver and self.approver not in notify_users:
-            notify_users.append(self.approver)
+        notify_users = list(dict.fromkeys([*notify_users, *self._approvers()]))
 
         self._notify_users(
             users=notify_users,
@@ -988,6 +916,8 @@ class Memo(Document):
             reference_rows.append(("Purchase Order", self.purchase_order))
         for row in self.reference_documents or []:
             reference_rows.append((row.reference_doctype, row.reference_name))
+        for row in self.memo_attachments or []:
+            reference_rows.append((row.description or _("Attachment"), row.attachment))
 
         for row in self.action_points or []:
             action_rows.append(

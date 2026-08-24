@@ -17,6 +17,49 @@ const setUserQueries = (frm) => {
     }
 };
 
+const setApproverLinkLabel = (frm, userField, designationField, employeeField) => {
+    const user = frm.doc[userField];
+    const designation = frm.doc[designationField];
+    const employee = frm.doc[employeeField];
+    if (!user || !designation) {
+        return;
+    }
+
+    const label = employee ? `${designation} (${employee})` : designation;
+    frappe.utils.add_link_title("User", user, label);
+    frm.fields_dict[userField]?.set_formatted_input(user);
+};
+
+const setApproverLinkLabels = (frm) => {
+    setApproverLinkLabel(frm, "approver", "approver_designation", "approver_employee");
+    setApproverLinkLabel(
+        frm,
+        "secondary_approver",
+        "secondary_approver_designation",
+        "secondary_approver_employee"
+    );
+};
+
+const refreshApproverDetails = async (frm, userField, designationField, employeeField) => {
+    const user = frm.doc[userField];
+    if (!user) {
+        await frm.set_value({[designationField]: null, [employeeField]: null});
+        return;
+    }
+
+    const response = await frappe.db.get_value(
+        "Employee",
+        {user_id: user, status: "Active"},
+        ["name", "designation"]
+    );
+    const employee = response.message || {};
+    await frm.set_value({
+        [designationField]: employee.designation || null,
+        [employeeField]: employee.name || null,
+    });
+    setApproverLinkLabel(frm, userField, designationField, employeeField);
+};
+
 const syncRecipientAcknowledgementDefaults = (frm) => {
     (frm.doc.recipients || []).forEach((row) => {
         if (
@@ -53,6 +96,7 @@ const configureExecutionAccess = (frm, capabilities = {}) => {
     const canConfigure =
         frm.doc.status === "Pending Approval" &&
         (frm.doc.approver === frappe.session.user ||
+            frm.doc.secondary_approver === frappe.session.user ||
             capabilities.has_global_access ||
             capabilities.has_approval_access);
     const canView = canConfigure || frm.doc.status === "Approved";
@@ -223,6 +267,12 @@ frappe.ui.form.on("Memo", {
                 user_type: "System User",
             },
         }));
+        frm.set_query("secondary_approver", () => ({
+            filters: {
+                enabled: 1,
+                user_type: "System User",
+            },
+        }));
         setUserQueries(frm);
         configureExecutionAccess(frm);
     },
@@ -231,6 +281,7 @@ frappe.ui.form.on("Memo", {
         lockReadonlyGrids(frm);
         configureExecutionAccess(frm);
         await setCurrentUserOrigin(frm);
+        setApproverLinkLabels(frm);
     },
     async refresh(frm) {
         setUserQueries(frm);
@@ -246,6 +297,7 @@ frappe.ui.form.on("Memo", {
         const capabilities = response.message || {};
         configureExecutionAccess(frm, capabilities);
         addMemoButtons(frm, capabilities);
+        setApproverLinkLabels(frm);
     },
     before_workflow_action(frm) {
         const action = frm.selected_workflow_action;
@@ -305,6 +357,47 @@ frappe.ui.form.on("Memo", {
     },
     acknowledgement_due_date(frm) {
         syncRecipientAcknowledgementDefaults(frm);
+    },
+    requires_approval(frm) {
+        // Only show the warning when the checkbox is unchecked.
+        if (frm.doc.requires_approval) {
+            return;
+        }
+
+        frappe.confirm(
+            __(
+                "Disabling approval means this memo will not be sent to an approver. " +
+                "The memo may be approved and circulated directly by an authorized user. " +
+                "Are you sure you want to continue?"
+            ),
+            () => {
+                // The user selected Yes, so leave the checkbox unchecked.
+                frappe.show_alert({
+                    message: __("Approval requirement disabled"),
+                    indicator: "orange",
+                });
+            },
+            () => {
+                // The user selected No or cancelled, so restore the checkbox.
+                frm.set_value("requires_approval", 1);
+            }
+        );
+    },
+    approver(frm) {
+        return refreshApproverDetails(
+            frm,
+            "approver",
+            "approver_designation",
+            "approver_employee"
+        );
+    },
+    secondary_approver(frm) {
+        return refreshApproverDetails(
+            frm,
+            "secondary_approver",
+            "secondary_approver_designation",
+            "secondary_approver_employee"
+        );
     },
 });
 

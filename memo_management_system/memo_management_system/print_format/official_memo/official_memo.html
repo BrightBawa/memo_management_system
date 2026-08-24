@@ -105,34 +105,20 @@
                 </td>
             </tr>
 
-            {% set to_recipients = [] %}
-            {% set cc_recipients = [] %}
-            {% for row in doc.recipients or [] %}
-                {% if row.recipient_type == "Cc" %}
-                    {% set _ = cc_recipients.append(row) %}
-                {% else %}
-                    {% set _ = to_recipients.append(row) %}
-                {% endif %}
-            {% endfor %}
-
-            {% if to_recipients %}
+            {% if doc.approver %}
             <tr>
                 <td class="memo-label">TO:</td>
                 <td>
-                    {% for row in to_recipients %}
-                        {{ row.employee_name or row.employee }}{% if row.designation %} — {{ row.designation }}{% endif %}{% if row.department %}, {{ row.department }}{% endif %}{% if not loop.last %}<br>{% endif %}
-                    {% endfor %}
+                    {{ doc.approver_designation or "Approver" }}{% if doc.approver_employee %} ({{ doc.approver_employee }}){% endif %}
                 </td>
             </tr>
             {% endif %}
 
-            {% if cc_recipients %}
+            {% if doc.secondary_approver %}
             <tr>
                 <td class="memo-label">CC:</td>
                 <td>
-                    {% for row in cc_recipients %}
-                        {{ row.employee_name or row.employee }}{% if row.designation %} — {{ row.designation }}{% endif %}{% if row.department %}, {{ row.department }}{% endif %}{% if not loop.last %}<br>{% endif %}
-                    {% endfor %}
+                    {{ doc.secondary_approver_designation or "Secondary Approver" }}{% if doc.secondary_approver_employee %} ({{ doc.secondary_approver_employee }}){% endif %}
                 </td>
             </tr>
             {% endif %}
@@ -224,7 +210,7 @@
     </div>
     {% endif %}
 
-    {% if doc.material_request or doc.purchase_order or doc.reference_documents or doc.primary_attachment %}
+    {% if doc.material_request or doc.purchase_order or doc.reference_documents or doc.memo_attachments or doc.primary_attachment %}
     <div class="supplementary-section">
         <h4 class="section-title">References and Attachments</h4>
         <ul class="compact-list">
@@ -236,7 +222,10 @@
                 {{ row.reference_doctype }} {{ row.reference_name }}{% if row.remarks %} — {{ row.remarks }}{% endif %}
             </li>
             {% endfor %}
-            {% if doc.primary_attachment %}<li><strong>Primary Attachment:</strong> {{ doc.primary_attachment }}</li>{% endif %}
+            {% for row in doc.memo_attachments or [] %}
+            <li><strong>{{ row.description or "Attachment" }}:</strong> {{ row.attachment }}</li>
+            {% endfor %}
+            {% if doc.primary_attachment and not doc.memo_attachments %}<li><strong>Attachment:</strong> {{ doc.primary_attachment }}</li>{% endif %}
         </ul>
     </div>
     {% endif %}
@@ -252,9 +241,10 @@
             </tr>
             {% endif %}
             {% if doc.approved_by %}
+            {% set approving_employee = frappe.db.get_value("Employee", {"user_id": doc.approved_by}, ["name", "designation"], as_dict=True) %}
             <tr>
                 <td class="sign-off-label">Approved By</td>
-                <td>{{ frappe.db.get_value("User", doc.approved_by, "full_name") or doc.approved_by }}{% if doc.approved_on %} — {{ frappe.utils.format_datetime(doc.approved_on) }}{% endif %}</td>
+                <td>{% if approving_employee %}{{ approving_employee.designation or "Approver" }} ({{ approving_employee.name }}){% else %}Approver{% endif %}{% if doc.approved_on %} — {{ frappe.utils.format_datetime(doc.approved_on) }}{% endif %}</td>
             </tr>
             {% endif %}
             {% if doc.circulated_by %}

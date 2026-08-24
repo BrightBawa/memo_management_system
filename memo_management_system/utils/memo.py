@@ -113,7 +113,9 @@ def setup_memo_workflow():
         task.insert(ignore_permissions=True)
 
     owner_condition = "doc.owner == frappe.session.user"
-    selected_approver_condition = "doc.approver == frappe.session.user"
+    selected_approver_condition = (
+        "frappe.session.user in (doc.approver, doc.secondary_approver)"
+    )
     transitions = [
         _memo_transition("Draft", "Submit for Approval", "Pending Approval", MEMO_USER_ROLE,
             f"doc.requires_approval and ({owner_condition})"),
@@ -153,16 +155,18 @@ def setup_memo_workflow():
     for role in approval_roles:
         transitions.extend([
             _memo_transition("Pending Approval", "Approve Memo", "Approved", role,
-                "doc.approver != frappe.session.user"),
+                "frappe.session.user not in (doc.approver, doc.secondary_approver)"),
             _memo_transition("Pending Approval", "Reject Memo", "Rejected", role,
-                "doc.approver != frappe.session.user"),
+                "frappe.session.user not in (doc.approver, doc.secondary_approver)"),
         ])
 
     workflow_values = {
         "document_type": "Memo",
         "workflow_state_field": "status",
         "is_active": 1,
-        "override_status": 1,
+        # Display the workflow state (Approved, Pending Approval, etc.) while
+        # Frappe continues to enforce the underlying document status.
+        "override_status": 0,
         "send_email_alert": 0,
         "enable_action_confirmation": 1,
         "states": [
@@ -171,7 +175,8 @@ def setup_memo_workflow():
             # document share, and controller restrict decisions to the user
             # specifically selected on this memo.
             {"state": "Pending Approval", "doc_status": "0", "allow_edit": "All"},
-            {"state": "Approved", "doc_status": "0", "allow_edit": MEMO_MANAGER_ROLE},
+            # Approval is the native Frappe submission boundary.
+            {"state": "Approved", "doc_status": "1", "allow_edit": MEMO_MANAGER_ROLE},
             # Memo.before_save prevents direct edits in Rejected; Memo User is
             # required here so the owner can execute the Amend Memo action.
             {"state": "Rejected", "doc_status": "0", "allow_edit": MEMO_USER_ROLE},
