@@ -1,10 +1,78 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
 
 class TestMemo(FrappeTestCase):
+    def test_user_emails_returns_enabled_approver_addresses(self):
+        with patch(
+            "memo_management_system.memo_management_system.doctype.memo.memo.frappe.get_all",
+            return_value=["approver@example.com"],
+        ) as get_all:
+            emails = frappe.get_doc({"doctype": "Memo"})._user_emails(
+                ["approver@example.com", "approver@example.com", None]
+            )
+
+        self.assertEqual(emails, ["approver@example.com"])
+        get_all.assert_called_once_with(
+            "User",
+            filters={"name": ("in", ["approver@example.com"]), "enabled": 1},
+            pluck="email",
+        )
+
+    def test_approval_todo_does_not_use_generic_assignment_notification(self):
+        memo = frappe.get_doc(
+            {
+                "doctype": "Memo",
+                "name": "MEMO-TEST-ASSIGNMENT",
+                "subject": "Executive Review",
+                "approver": "approver@example.com",
+                "priority": "High",
+            }
+        )
+        todo = MagicMock()
+
+        with (
+            patch.object(memo, "_approvers", return_value=["approver@example.com"]),
+            patch(
+                "memo_management_system.memo_management_system.doctype.memo.memo.frappe.db.exists",
+                return_value=False,
+            ),
+            patch(
+                "memo_management_system.memo_management_system.doctype.memo.memo.frappe.get_doc",
+                return_value=todo,
+            ) as get_doc,
+        ):
+            memo._assign_approval_todo()
+
+        todo.insert.assert_called_once_with(ignore_permissions=True)
+        values = get_doc.call_args.args[0]
+        self.assertEqual(values["doctype"], "ToDo")
+        self.assertEqual(values["allocated_to"], "approver@example.com")
+        self.assertEqual(values["reference_name"], memo.name)
+
+    def test_closing_approval_todo_does_not_use_assignment_helper(self):
+        memo = frappe.get_doc(
+            {"doctype": "Memo", "name": "MEMO-TEST-ASSIGNMENT"}
+        )
+        todo = MagicMock()
+
+        with (
+            patch(
+                "memo_management_system.memo_management_system.doctype.memo.memo.frappe.get_all",
+                return_value=["TODO-1"],
+            ),
+            patch(
+                "memo_management_system.memo_management_system.doctype.memo.memo.frappe.get_doc",
+                return_value=todo,
+            ),
+        ):
+            memo._close_approval_todos()
+
+        self.assertEqual(todo.status, "Closed")
+        todo.save.assert_called_once_with(ignore_permissions=True)
+
     @patch(
         "memo_management_system.memo_management_system.doctype.memo.memo.has_global_access",
         return_value=False,

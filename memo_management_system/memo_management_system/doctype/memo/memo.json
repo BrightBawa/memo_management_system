@@ -44,11 +44,12 @@
   "routing_history",
   "related_documents_section",
   "material_request",
-  "purchase_order",
-  "memo_attachments",
-  "column_break_related",
-  "reference_documents",
   "primary_attachment",
+  "column_break_ktqj",
+  "memo_attachments",
+  "section_break_qvyr",
+  "purchase_order",
+  "reference_documents",
   "sign_off_section",
   "prepared_by",
   "prepared_on",
@@ -358,10 +359,6 @@
    "options": "Purchase Order"
   },
   {
-   "fieldname": "column_break_related",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "primary_attachment",
    "fieldtype": "Attach",
    "hidden": 1,
@@ -444,12 +441,20 @@
    "fieldtype": "Table",
    "label": "Memo Attachments",
    "options": "Memo Attachments"
+  },
+  {
+   "fieldname": "column_break_ktqj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_qvyr",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-08-24 11:32:58.910837",
+ "modified": "2026-08-24 11:53:07.063461",
  "modified_by": "Administrator",
  "module": "Memo Management System",
  "name": "Memo",

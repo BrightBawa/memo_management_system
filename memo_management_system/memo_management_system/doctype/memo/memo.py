@@ -595,10 +595,18 @@ class Memo(Document):
                 remarks=_("Memo submitted for approval."),
             )
             self.add_comment("Info", _("Memo submitted by {0} for approval.").format(get_fullname(actor)))
+            approvers = self._approvers()
             self._notify_users(
-                users=self._approvers(), emails=[],
-                subject=_("Memo Awaiting Approval: {0}").format(self.subject),
-                heading=_("A memo is awaiting your approval."),
+                users=approvers,
+                emails=self._user_emails(approvers),
+                subject=_("Memo Submitted for Your Consideration and Approval: {0}").format(
+                    self.subject
+                ),
+                heading=_(
+                    "A memo titled \u201c{0}\u201d has been submitted for your kind consideration "
+                    "and approval. Your review and direction on the matter would be "
+                    "greatly appreciated."
+                ).format(self.subject),
             )
             self._set_approval_share(write=True)
             self._assign_approval_todo()
@@ -652,24 +660,36 @@ class Memo(Document):
             )
 
     def _assign_approval_todo(self):
-        """Put a pending memo in the selected approver's assignment dashboard."""
-        approvers = self._approvers()
-        if not approvers:
-            return
+        """Put a pending memo in approvers' dashboards without a generic assignment email."""
+        from frappe.utils import nowdate
 
-        from frappe.desk.form.assign_to import _add
+        for approver in self._approvers():
+            if frappe.db.exists(
+                "ToDo",
+                {
+                    "reference_type": self.doctype,
+                    "reference_name": self.name,
+                    "status": "Open",
+                    "allocated_to": approver,
+                },
+            ):
+                continue
 
-        _add(
-            {
-                "assign_to": approvers,
-                "doctype": self.doctype,
-                "name": self.name,
-                "description": _("Approve or reject memo {0}: {1}").format(self.name, self.subject),
-                "priority": "High" if self.priority in {"High", "Urgent"} else "Medium",
-                "assigned_by": frappe.session.user,
-            },
-            ignore_permissions=True,
-        )
+            frappe.get_doc(
+                {
+                    "doctype": "ToDo",
+                    "allocated_to": approver,
+                    "reference_type": self.doctype,
+                    "reference_name": self.name,
+                    "description": _(
+                        "Kindly review memo {0} for consideration and approval: {1}"
+                    ).format(self.name, self.subject),
+                    "priority": "High" if self.priority in {"High", "Urgent"} else "Medium",
+                    "status": "Open",
+                    "date": nowdate(),
+                    "assigned_by": frappe.session.user,
+                }
+            ).insert(ignore_permissions=True)
 
     def _set_approval_share(self, write=False):
         """Grant access only to this memo and remove transition write afterward."""
@@ -732,10 +752,20 @@ class Memo(Document):
             )
 
     def _close_approval_todos(self):
-        """Remove a decided memo from approval assignment dashboards."""
-        from frappe.desk.form.assign_to import close_all_assignments
-
-        close_all_assignments(self.doctype, self.name, ignore_permissions=True)
+        """Close approval ToDos without a generic assignment-removal email."""
+        assignments = frappe.get_all(
+            "ToDo",
+            filters={
+                "reference_type": self.doctype,
+                "reference_name": self.name,
+                "status": ("not in", ("Cancelled", "Closed")),
+            },
+            pluck="name",
+        )
+        for assignment in assignments:
+            todo = frappe.get_doc("ToDo", assignment)
+            todo.status = "Closed"
+            todo.save(ignore_permissions=True)
 
     def recirculate_action(self, remarks=None):
         if not self.can_current_user_recirculate():
@@ -869,6 +899,19 @@ class Memo(Document):
                 emails.append(row.official_mail)
 
         self._notify_users(users, emails, subject, heading)
+
+    @staticmethod
+    def _user_emails(users):
+        """Return enabled users' delivery addresses for explicit memo email."""
+        unique_users = [user for user in dict.fromkeys(users) if user]
+        if not unique_users:
+            return []
+
+        return frappe.get_all(
+            "User",
+            filters={"name": ("in", unique_users), "enabled": 1},
+            pluck="email",
+        )
 
     def _notify_users(self, users, emails, subject, heading):
         unique_users = [user for user in dict.fromkeys(users) if user]
