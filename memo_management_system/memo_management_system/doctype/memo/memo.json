@@ -6,6 +6,23 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "content_section",
+  "subject",
+  "summary",
+  "content",
+  "execution_and_follow_up_section",
+  "action_points",
+  "approval_section",
+  "requires_approval",
+  "approver",
+  "approver_designation",
+  "approver_employee",
+  "column_break_approval",
+  "secondary_approver",
+  "secondary_approver_designation",
+  "secondary_approver_employee",
+  "execution_section",
+  "routing_history",
   "identity_section",
   "naming_series",
   "status",
@@ -26,22 +43,6 @@
   "recipients",
   "require_recipient_acknowledgement",
   "acknowledgement_due_date",
-  "content_section",
-  "subject",
-  "summary",
-  "content",
-  "approval_section",
-  "requires_approval",
-  "approver",
-  "approver_designation",
-  "approver_employee",
-  "column_break_approval",
-  "secondary_approver",
-  "secondary_approver_designation",
-  "secondary_approver_employee",
-  "execution_section",
-  "action_points",
-  "routing_history",
   "related_documents_section",
   "material_request",
   "primary_attachment",
@@ -326,7 +327,7 @@
   {
    "fieldname": "execution_section",
    "fieldtype": "Section Break",
-   "label": "Execution and Follow-up"
+   "label": "Routing History"
   },
   {
    "fieldname": "action_points",
@@ -339,6 +340,7 @@
    "fieldtype": "Table",
    "label": "Routing History",
    "options": "Memo Routing Log",
+   "permlevel": 1,
    "read_only": 1
   },
   {
@@ -449,12 +451,17 @@
   {
    "fieldname": "section_break_qvyr",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "execution_and_follow_up_section",
+   "fieldtype": "Section Break",
+   "label": "Execution and Follow up"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-08-24 11:53:07.063461",
+ "modified": "2026-08-26 19:23:44.848523",
  "modified_by": "Administrator",
  "module": "Memo Management System",
  "name": "Memo",
